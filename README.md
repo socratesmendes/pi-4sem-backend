@@ -1,13 +1,4 @@
-API IoT - Dados de Sensores
-API REST para gerenciamento de dados de dispositivos IoT com análises de consumo e temperatura.
-🚀 Instalação Rápida
-bash# Clone e instale
-git clone https://github.com/seu-usuario/iot-api.git
-cd iot-api
-npm install
-
-# Configure o ambiente
-cp .env.example .env
+API Back-End para Projeto Interdisciplinar do 4º semestre da FATEC
 
 # Inicie
 npm start
