@@ -18,20 +18,7 @@ conexao.once("open", () => {
 const app = express();
 
 // Configuração CORS
-const corsOptions = {
-  origin: [
-    'http://localhost:3001',
-    'http://127.0.0.1:3001',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000'
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-};
-
-// Middleware para CORS
-app.use(cors(corsOptions));
+app.use(cors());
 
 // Middleware para parsing JSON
 app.use(express.json());
