@@ -4,7 +4,7 @@ import AnalyticsController from "../controllers/analyticsController.js";
 
 const routes = express.Router();
 
-// Análise de consumo por dia da semana (substituiu análise por hora)
+// Análise de consumo por dia da semana
 routes.get("/analytics/daily-consumption", AnalyticsController.getConsumptionByDay);
 
 // Análise de eficiência energética por temperatura

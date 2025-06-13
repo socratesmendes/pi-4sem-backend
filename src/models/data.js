@@ -6,9 +6,8 @@ const dataSchema = new mongoose.Schema({
     date: { type: mongoose.Schema.Types.Date, required: [true, "A data é obrigatória"] },
     consumption: { type: mongoose.Schema.Types.Number, required: [true, "O valor de consumo é obrigatório"] },
     temperature: { type: mongoose.Schema.Types.Mixed, required: [true, "Os valores de temperaturas são obrigatórios"] },
-    event: { type: mongoose.Schema.Types.String }
+    event: { type: mongoose.Schema.Types.String } // Campo opcional para eventos
 });
 
 const data = mongoose.model("data", dataSchema, "data");
-
 export default data;

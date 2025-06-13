@@ -1,7 +1,7 @@
 import data from "../models/data.js";
 
 class DataController {
-
+    // Lista todos os dados
     static async listData (req, res, next) {
         try {
             const listData = await data.find({});
@@ -11,6 +11,7 @@ class DataController {
         }
     };
 
+    // Busca dados por ID específico
     static async findDataById (req, res, next) {
         try {
             const id = req.params.id;
@@ -25,6 +26,7 @@ class DataController {
         }
     };
 
+    // Atualiza dados existentes por ID
     static async updateDataById (req, res, next) {
         try {
             const id = req.params.id;
@@ -38,6 +40,7 @@ class DataController {
         }
     };
 
+    // Cria novos dados
     static async createData (req, res, next) {
         try {
             const newData = await data.create(req.body);
@@ -47,6 +50,7 @@ class DataController {
         }
     };
 
+    // Remove dados por ID
     static async deleteDataById (req, res, next) {
         try {
             const id = req.params.id;
@@ -57,10 +61,12 @@ class DataController {
         }
     };
 
+    // Busca dados filtrados por período de datas
     static async findDataByDateRange(req, res, next) {
         try {
             const { startDate, endDate, device_name } = req.query;
-
+            
+            // Validação de parâmetros obrigatórios
             if (!startDate || !endDate) {
                 return res.status(400).json({ 
                     message: "Os parâmetros 'startDate' e 'endDate' são obrigatórios. Formato: YYYY-MM-DD ou timestamp" 
@@ -70,6 +76,7 @@ class DataController {
             let filter = {};
             let start, end;
 
+            // Conversão de datas (suporta timestamp ou string)
             if (!isNaN(startDate)) {
                 start = new Date(parseInt(startDate));
             } else {
@@ -82,30 +89,36 @@ class DataController {
                 end = new Date(endDate);
             }
 
+            // Validação de formato de data
             if (isNaN(start.getTime()) || isNaN(end.getTime())) {
                 return res.status(400).json({ 
                     message: "Formato de data inválido. Use YYYY-MM-DD ou timestamp em millisegundos" 
                 });
             }
 
+            // Validação de ordem das datas
             if (start > end) {
                 return res.status(400).json({ 
                     message: "A data inicial deve ser anterior à data final" 
                 });
             }
 
+            // Ajusta fim do dia para incluir registros do dia final
             end.setHours(23, 59, 59, 999);
+
+            // Monta filtro de data
             filter.date = {
                 $gte: start,
                 $lte: end
             };
 
+            // Filtro opcional por nome do dispositivo
             if (device_name) {
                 filter.device_name = { $regex: device_name, $options: 'i' };
             }
 
             const dataFound = await data.find(filter).sort({ date: 1 });
-
+            
             res.status(200).json({
                 count: dataFound.length,
                 period: {
@@ -115,22 +128,24 @@ class DataController {
                 filter_applied: filter,
                 data: dataFound
             });
-
         } catch (erro) {
             next(erro);
         }
     };
 
+    // Gera estatísticas dos dados por período
     static async getDataStatsByDateRange(req, res, next) {
         try {
             const { startDate, endDate, device_name } = req.query;
             
+            // Validação de parâmetros
             if (!startDate || !endDate) {
                 return res.status(400).json({ 
                     message: "Os parâmetros 'startDate' e 'endDate' são obrigatórios" 
                 });
             }
 
+            // Conversão e validação de datas
             let start = !isNaN(startDate) ? new Date(parseInt(startDate)) : new Date(startDate);
             let end = !isNaN(endDate) ? new Date(parseInt(endDate)) : new Date(endDate);
             
@@ -142,6 +157,7 @@ class DataController {
 
             end.setHours(23, 59, 59, 999);
 
+            // Filtro base para agregação
             let matchStage = {
                 date: { $gte: start, $lte: end }
             };
@@ -150,6 +166,7 @@ class DataController {
                 matchStage.device_name = { $regex: device_name, $options: 'i' };
             }
 
+            // Estatísticas gerais usando MongoDB aggregation
             const generalStats = await data.aggregate([
                 { $match: matchStage },
                 {
@@ -168,6 +185,7 @@ class DataController {
                 }
             ]);
 
+            // Estatísticas por dispositivo
             const consumptionByDevice = await data.aggregate([
                 { $match: matchStage },
                 {
@@ -189,6 +207,7 @@ class DataController {
                     $sort: { totalConsumption: -1 }
                 },
                 {
+                    // Formatação dos dados de saída
                     $project: {
                         _id: 0,
                         device_name: "$_id",
@@ -206,6 +225,7 @@ class DataController {
                 }
             ]);
 
+            // Monta resposta formatada com estatísticas completas
             const response = {
                 period: {
                     start: start.toISOString(),
@@ -230,10 +250,12 @@ class DataController {
                 summary: {
                     totalDevices: consumptionByDevice.length,
                     totalConsumptionAllDevices: Math.round(consumptionByDevice.reduce((sum, device) => sum + device.totalConsumption, 0) * 100) / 100,
+                    // Dispositivo com maior consumo
                     mostConsumingDevice: consumptionByDevice.length > 0 ? {
                         name: consumptionByDevice[0].device_name,
                         consumption: consumptionByDevice[0].totalConsumption
                     } : null,
+                    // Dispositivo com menor consumo
                     leastConsumingDevice: consumptionByDevice.length > 0 ? {
                         name: consumptionByDevice[consumptionByDevice.length - 1].device_name,
                         consumption: consumptionByDevice[consumptionByDevice.length - 1].totalConsumption
@@ -242,12 +264,10 @@ class DataController {
             };
 
             res.status(200).json(response);
-
         } catch (erro) {
             next(erro);
         }
     }
-
 };
 
 export default DataController;
